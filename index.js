@@ -1,14 +1,13 @@
 require('dotenv').config();
 const app = require('./src/app');
-const sequelize = require('./src/config/db');
+const { sequelize } = require('./src/models'); // 👈 obtenelo desde models/index.js
 
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
     try {
         await sequelize.authenticate();
-        await sequelize.sync();
-        // await sequelize.sync({ force: true });
+        await sequelize.sync({ force: true }); // { force: true } si querés resetear
         console.log('🟢 Database connected successfully.');
 
         app.listen(PORT, () => {

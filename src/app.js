@@ -1,19 +1,15 @@
+// src/app.js
 const express = require('express');
-const cors = require('cors');
-
 const app = express();
 
-// Middlewares
-app.use(cors());
+const playerRoutes = require('./routes/player.routes');
+const newsRoutes = require('./routes/news.routes');
+const categoryRoutes = require('./routes/category.routes');
+
 app.use(express.json());
 
-// Rutas de jugadores
-const playerRoutes = require('./routes/player.routes');
 app.use('/api/players', playerRoutes);
-
-// Rutas base de prueba
-app.get('/', (req, res) => {
-    res.send('🏃‍♂️ API Olimpo en marcha');
-});
+app.use('/api/news', newsRoutes);
+app.use('/api/categories', categoryRoutes);
 
 module.exports = app;
