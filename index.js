@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 async function startServer() {
     try {
         await sequelize.authenticate();
+        await sequelize.sync({ alter: true }); // crea o actualiza tablas automáticamente
         console.log('🟢 Database connected successfully.');
 
         app.listen(PORT, () => {
