@@ -1,26 +1,40 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
+const sequelize = require('../config/db');
 
 const Player = sequelize.define('Player', {
-    name: {
+    firstName: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
-    number: {
-        type: DataTypes.INTEGER,
-        allowNull: false
+    lastName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    birthDate: {
+        type: DataTypes.DATEONLY,
     },
     position: {
         type: DataTypes.STRING,
-        allowNull: false
+    },
+    preferredFoot: {
+        type: DataTypes.STRING,
+    },
+    photo: {
+        type: DataTypes.STRING,
     },
     category: {
         type: DataTypes.STRING,
-        allowNull: false
-    }
+    },
+    dni: {
+        type: DataTypes.STRING,
+        unique: true,
+    },
+    is_active: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+    },
 }, {
-    tableName: 'players',
-    timestamps: true
+    timestamps: true,
 });
 
 module.exports = Player;
