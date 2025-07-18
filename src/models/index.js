@@ -11,6 +11,7 @@ const PlayerOfTheMonth = require('./playerOfTheMonth.model');
 const HistoryEvent = require('./historyEvent.model');
 const HistorySubsection = require('./historySubsection.model');
 const Testimonial = require('./testimonial.model');
+const User = require('./user.model');
 
 // --- Definir Asociaciones Existentes ---
 News.belongsToMany(Category, {
@@ -63,4 +64,5 @@ module.exports = {
     Identity,
     PlayerOfTheMonth,
     Testimonial,
+    User,
 };

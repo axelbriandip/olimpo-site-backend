@@ -1,6 +1,7 @@
 // src/app.js
 const express = require('express');
 const app = express();
+const cors = require('cors');
 
 const playerRoutes = require('./routes/player.routes');
 const newsRoutes = require('./routes/news.routes');
@@ -10,8 +11,10 @@ const historyEvent = require('./routes/historyEvent.routes');
 const identityRoutes = require('./routes/identity.routes');
 const playerOfTheMonthRoutes = require('./routes/playerOfTheMonth.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
+const authRoutes = require('./routes/auth.routes');
 
 app.use(express.json());
+app.use(cors());
 
 app.use('/api/players', playerRoutes);
 app.use('/api/news', newsRoutes);
@@ -21,5 +24,6 @@ app.use('/api/history', historyEvent);
 app.use('/api/identity', identityRoutes);
 app.use('/api/best-players', playerOfTheMonthRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/auth', authRoutes);
 
 module.exports = app;
