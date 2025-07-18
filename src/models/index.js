@@ -7,6 +7,7 @@ const Category = require('./category.model');
 const Match = require('./match.model');
 const Player = require('./player.model');
 const Identity = require('./identity.model');
+const PlayerOfTheMonth = require('./playerOfTheMonth.model');
 
 // NUEVOS MODELOS
 const HistoryEvent = require('./historyEvent.model');
@@ -27,7 +28,6 @@ Category.belongsToMany(News, {
     otherKey: 'newsId'
 });
 
-// --- NUEVAS ASOCIACIONES ---
 // Un HistoryEvent tiene muchas HistorySubsections
 HistoryEvent.hasMany(HistorySubsection, {
     foreignKey: 'historyEventId', // La clave foránea en HistorySubsection
@@ -41,6 +41,18 @@ HistorySubsection.belongsTo(HistoryEvent, {
     as: 'historyEvent',            // Alias para la relación inversa si la necesitas
 });
 
+// Un PlayerOfTheMonth pertenece a un Player
+PlayerOfTheMonth.belongsTo(Player, {
+    foreignKey: 'playerId', // La clave foránea en PlayerOfTheMonth
+    as: 'player',           // El alias para usar con `include`
+});
+
+// Un Player puede ser Jugador del Mes varias veces (opcional, si necesitas la relación inversa)
+Player.hasMany(PlayerOfTheMonth, {
+    foreignKey: 'playerId',
+    as: 'playerOfTheMonthAwards', // Alias para los premios de Jugador del Mes del jugador
+});
+
 module.exports = {
     sequelize,
     News,
@@ -50,4 +62,5 @@ module.exports = {
     HistoryEvent,
     HistorySubsection,
     Identity,
+    PlayerOfTheMonth,
 };
