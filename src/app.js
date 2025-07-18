@@ -6,6 +6,7 @@ const playerRoutes = require('./routes/player.routes');
 const newsRoutes = require('./routes/news.routes');
 const categoryRoutes = require('./routes/category.routes');
 const matchRoutes = require('./routes/match.routes');
+const historyEvent = require('./routes/historyEvent.routes');
 
 app.use(express.json());
 
@@ -13,5 +14,6 @@ app.use('/api/players', playerRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/history', historyEvent);
 
 module.exports = app;
