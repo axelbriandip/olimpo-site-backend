@@ -3,6 +3,7 @@ const sequelize = require('../config/db');
 
 const News = require('./news.model');
 const Category = require('./category.model');
+const Match = require('./match.model');
 
 // Definir asociaciones aquí
 News.belongsToMany(Category, {
@@ -22,5 +23,6 @@ Category.belongsToMany(News, {
 module.exports = {
     sequelize,
     News,
-    Category
+    Category,
+    Match
 };
