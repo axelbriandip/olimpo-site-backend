@@ -1,68 +1,68 @@
 // src/models/identity.model.js
+
+// SOLO necesitas DataTypes aquí.
+// NO importes 'sequelize' aquí, ya que se te pasará como argumento.
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // Asume que db.js está en config/
 
-const Identity = sequelize.define('Identity', {
-    // Campos generales de la sección "Nuestra Identidad"
-    mainTitle: { // "Nuestra Identidad"
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true, // Solo debería haber un registro de identidad
-    },
-    mainDescription: { // "Explora nuestra razón de ser..."
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
+module.exports = (sequelize, DataTypes) => { // <-- **ESTA ES LA CLAVE: Exporta una FUNCIÓN**
+    const Identity = sequelize.define('Identity', {
+        id: { // Un ID es crucial, aunque no lo tuvieras antes. Sequelize lo añade por defecto, pero es buena práctica.
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        mainTitle: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        mainDescription: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        missionIcon: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        missionTitle: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        missionText: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        visionIcon: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        visionTitle: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        visionText: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        valuesIcon: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        valuesTitle: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        valuesText: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        // Añade cualquier otro campo que tengas en tu modelo Identity
+    }, {
+        timestamps: true, // Para createdAt y updatedAt
+        tableName: 'Identities' // Asegúrate de que el nombre de la tabla sea 'Identities' o el que uses en tu DB
+    });
 
-    // Campos para la sección "Misión"
-    missionIcon: { // Emoji o URL del icono
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    missionTitle: { // "Misión"
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    missionText: { // Párrafo de la misión
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
+    // Si tienes asociaciones relacionadas con Identity, pero las defines en index.js,
+    // no necesitas el método .associate aquí.
 
-    // Campos para la sección "Visión"
-    visionIcon: { // Emoji o URL del icono
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    visionTitle: { // "Visión"
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    visionText: { // Párrafo de la visión
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-
-    // Campos para la sección "Valores"
-    valuesIcon: { // Emoji o URL del icono
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    valuesTitle: { // "Valores"
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    valuesText: { // Párrafo de los valores
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-
-    is_active: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-    },
-}, {
-    timestamps: true, // Para createdAt y updatedAt
-    tableName: 'identities', // Nombre de la tabla en la base de datos
-});
-
-module.exports = Identity;
+    return Identity; // <-- La función DEBE DEVOLVER el modelo definido
+};

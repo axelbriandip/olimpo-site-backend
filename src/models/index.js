@@ -1,19 +1,23 @@
 // src/models/index.js
 const sequelize = require('../config/db');
+const { DataTypes } = require('sequelize'); // <--- Importa DataTypes aquí
 
-// Modelos existentes
-const News = require('./news.model');
-const Category = require('./category.model');
-const Match = require('./match.model');
-const Player = require('./player.model');
-const Identity = require('./identity.model');
-const PlayerOfTheMonth = require('./playerOfTheMonth.model');
-const HistoryEvent = require('./historyEvent.model');
-const HistorySubsection = require('./historySubsection.model');
-const Testimonial = require('./testimonial.model');
-const User = require('./user.model');
+// --- Cargar e Instanciar Modelos ---
+// Pasa la instancia de sequelize y DataTypes a cada modelo para que se definan correctamente
+const News = require('./news.model')(sequelize, DataTypes);
+const Category = require('./category.model')(sequelize, DataTypes);
+const Match = require('./match.model')(sequelize, DataTypes);
+const Identity = require('./identity.model')(sequelize, DataTypes);
+const PlayerOfTheMonth = require('./playerOfTheMonth.model')(sequelize, DataTypes);
+const HistoryEvent = require('./historyEvent.model')(sequelize, DataTypes);
+const HistorySubsection = require('./historySubsection.model')(sequelize, DataTypes);
+const Testimonial = require('./testimonial.model')(sequelize, DataTypes);
+const User = require('./user.model')(sequelize, DataTypes);
+const Player = require('./player.model')(sequelize, DataTypes); // <--- AQUI ES LA CLAVE
 
-// --- Definir Asociaciones Existentes ---
+
+// --- Definir Asociaciones Existentes (ya las tienes, solo asegúrate que los modelos ya estén instanciados arriba) ---
+
 News.belongsToMany(Category, {
     through: 'NewsCategories',
     as: 'categories',
@@ -28,31 +32,30 @@ Category.belongsToMany(News, {
     otherKey: 'newsId'
 });
 
-// Un HistoryEvent tiene muchas HistorySubsections
 HistoryEvent.hasMany(HistorySubsection, {
-    foreignKey: 'historyEventId', // La clave foránea en HistorySubsection
-    as: 'subsections',             // El alias para usar con `include`
-    onDelete: 'CASCADE',           // Si eliminas un evento, sus subsecciones se eliminan
+    foreignKey: 'historyEventId',
+    as: 'subsections',
+    onDelete: 'CASCADE',
 });
 
-// Una HistorySubsection pertenece a un HistoryEvent
 HistorySubsection.belongsTo(HistoryEvent, {
     foreignKey: 'historyEventId',
-    as: 'historyEvent',            // Alias para la relación inversa si la necesitas
+    as: 'historyEvent',
 });
 
 // Un PlayerOfTheMonth pertenece a un Player
-PlayerOfTheMonth.belongsTo(Player, {
-    foreignKey: 'playerId', // La clave foránea en PlayerOfTheMonth
-    as: 'player',           // El alias para usar con `include`
+PlayerOfTheMonth.belongsTo(Player, { // <--- Ahora Player será el modelo de Sequelize
+    foreignKey: 'playerId',
+    as: 'player',
 });
 
 // Un Player puede ser Jugador del Mes varias veces (opcional, si necesitas la relación inversa)
-Player.hasMany(PlayerOfTheMonth, {
+Player.hasMany(PlayerOfTheMonth, { // <--- Ahora Player será el modelo de Sequelize
     foreignKey: 'playerId',
-    as: 'playerOfTheMonthAwards', // Alias para los premios de Jugador del Mes del jugador
+    as: 'playerOfTheMonthAwards',
 });
 
+// --- Exportar los Modelos Instanciados ---
 module.exports = {
     sequelize,
     News,

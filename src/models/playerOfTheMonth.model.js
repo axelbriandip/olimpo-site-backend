@@ -1,45 +1,55 @@
 // src/models/playerOfTheMonth.model.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // Asume que db.js está en config/
 
-const PlayerOfTheMonth = sequelize.define('PlayerOfTheMonth', {
-    month: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-            min: 1,
-            max: 12,
+module.exports = (sequelize, DataTypes) => { // Exporta una función que recibe sequelize y DataTypes
+    const PlayerOfTheMonth = sequelize.define('PlayerOfTheMonth', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
         },
-    },
-    year: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-            min: 1900, // Ajusta según el rango de años que necesites
+        month: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
         },
-    },
-    highlight: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-    photo: { // Opcional: una foto específica para el Jugador del Mes
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    is_active: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-    },
-}, {
-    timestamps: true,
-    tableName: 'players_of_the_month', // Nombre de la tabla en la base de datos
-    // Añadir una restricción única para que un jugador solo pueda ser Jugador del Mes una vez por mes/año
-    indexes: [
-        {
-            unique: true,
-            fields: ['playerId', 'month', 'year']
+        year: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        playerId: { // Clave foránea que referencia al jugador
+            type: DataTypes.INTEGER,
+            allowNull: false, // Asumo que un Jugador del Mes siempre debe estar asociado a un Player
+            references: { // Esto es opcional, Sequelize puede inferirlo, pero es buena práctica
+                model: 'Players', // Nombre de la tabla a la que hace referencia (por defecto el plural del modelo)
+                key: 'id',
+            },
+            onDelete: 'CASCADE', // Si se elimina el jugador, se elimina el registro de POTM
+            onUpdate: 'CASCADE', // Si cambia el ID del jugador (raro), se actualiza aquí
+        },
+        reason: {
+            type: DataTypes.TEXT,
+            allowNull: true
         }
-    ]
-});
+    }, {
+        timestamps: true, // Para createdAt y updatedAt
+        tableName: 'PlayerOfTheMonths', // Asegúrate de que coincida con el nombre de tu tabla en la DB
+        uniqueKeys: {
+            unique_player_month_year: { // Impide que haya dos Jugadores del Mes para el mismo mes y año
+                fields: ['month', 'year']
+            }
+        }
+    });
 
-module.exports = PlayerOfTheMonth;
+    // Si utilizas las asociaciones centralizadas en index.js, no necesitas .associate aquí.
+    // Pero si en el futuro decides usarlo, sería así:
+    /*
+    PlayerOfTheMonth.associate = (models) => {
+      PlayerOfTheMonth.belongsTo(models.Player, {
+        foreignKey: 'playerId',
+        as: 'player',
+      });
+    };
+    */
+
+    return PlayerOfTheMonth; // Retorna el modelo definido
+};
