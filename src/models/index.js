@@ -5,7 +5,8 @@ const sequelize = require('../config/db');
 const News = require('./news.model');
 const Category = require('./category.model');
 const Match = require('./match.model');
-const Player = require('./player.model'); // ¡Importa también el modelo Player!
+const Player = require('./player.model');
+const Identity = require('./identity.model');
 
 // NUEVOS MODELOS
 const HistoryEvent = require('./historyEvent.model');
@@ -45,7 +46,8 @@ module.exports = {
     News,
     Category,
     Match,
-    Player, // Exporta también Player
-    HistoryEvent,       // Exporta el nuevo modelo
-    HistorySubsection,  // Exporta el nuevo modelo
+    Player,
+    HistoryEvent,
+    HistorySubsection,
+    Identity,
 };
