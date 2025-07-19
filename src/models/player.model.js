@@ -36,6 +36,10 @@ module.exports = (sequelize, DataTypes) => { // Exporta una función que recibe 
             type: DataTypes.STRING,
             allowNull: true, // Permitir nulo si la foto no es obligatoria
         },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true, // Asume que por defecto un jugador está activo
+        },
         // Añade aquí cualquier otro campo que tengas para Player
         // For example:
         // status: {

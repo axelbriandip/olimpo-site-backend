@@ -1,13 +1,26 @@
-const Player = require('../models/player.model');
+// src/controllers/player.controller.js
+const { Player } = require('../models'); // ¡CORREGIDO: Importa Player del objeto de modelos principal!
 
 const getAllPlayers = async (req, res) => {
+    console.log('Intentando obtener todos los jugadores...');
     try {
         const players = await Player.findAll({
-            where: { is_active: true },
+            where: { is_active: true }, // Asegúrate de que la columna 'is_active' exista en tu DB
         });
-        res.json(players);
+        console.log('Jugadores obtenidos exitosamente. Cantidad:', players.length);
+        res.status(200).json(players); // Cambiado a 200 y json
     } catch (error) {
-        res.status(500).json({ message: 'Error retrieving players', error });
+        console.error('##########################################################');
+        console.error('ERROR AL OBTENER JUGADORES EN player.controller.js:');
+        console.error('Nombre del error:', error.name);
+        console.error('Mensaje del error:', error.message);
+        console.error('Stack Trace:', error.stack);
+        console.error('##########################################################');
+        res.status(500).json({
+            message: 'Error interno del servidor al obtener jugadores.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
@@ -19,7 +32,8 @@ const getPlayerById = async (req, res) => {
         }
         res.json(player);
     } catch (error) {
-        res.status(500).json({ message: 'Error retrieving player', error });
+        console.error('Error al obtener jugador por ID:', error);
+        res.status(500).json({ message: 'Error retrieving player', error: error.message });
     }
 };
 
@@ -28,7 +42,8 @@ const createPlayer = async (req, res) => {
         const newPlayer = await Player.create(req.body);
         res.status(201).json(newPlayer);
     } catch (error) {
-        res.status(500).json({ message: 'Error creating player', error });
+        console.error('Error al crear jugador:', error);
+        res.status(500).json({ message: 'Error creating player', error: error.message });
     }
 };
 
@@ -41,7 +56,8 @@ const updatePlayer = async (req, res) => {
         await player.update(req.body);
         res.json(player);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating player', error });
+        console.error('Error al actualizar jugador:', error);
+        res.status(500).json({ message: 'Error updating player', error: error.message });
     }
 };
 
@@ -55,7 +71,8 @@ const softDeletePlayer = async (req, res) => {
         await player.save();
         res.json({ message: 'Player deactivated successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Error deactivating player', error });
+        console.error('Error al desactivar jugador:', error);
+        res.status(500).json({ message: 'Error deactivating player', error: error.message });
     }
 };
 

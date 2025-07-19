@@ -6,7 +6,7 @@ const getIdentity = async (req, res) => {
     try {
         // Asume que solo habrá un registro de identidad, o el primero activo
         const identity = await Identity.findOne({
-            where: { is_active: true },
+            // where: { is_active: true },
         });
 
         if (!identity) {
@@ -25,7 +25,7 @@ const updateIdentity = async (req, res) => {
     try {
         // Busca el único registro activo de identidad
         let identity = await Identity.findOne({
-            where: { is_active: true },
+            // where: { is_active: true },
         });
 
         if (!identity) {

@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 async function startServer() {
     try {
         await sequelize.authenticate();
-        await sequelize.sync({ force: true }); // { force: true } si querés resetear
+        await sequelize.sync(); // { force: true } si querés resetear
         console.log('🟢 Database connected successfully.');
 
         app.listen(PORT, () => {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const playerController = require('../controllers/player.controller');
-const verifyToken = require('../middlewares/auth.middleware');
+const playerController = require('../controllers/player.controller'); // Correcto: importa el objeto completo de funciones del controlador
+const verifyToken = require('../middlewares/auth.middleware'); // ¡CORREGIDO: Necesita desestructuración!
 
 router.get('/', playerController.getAllPlayers);
 router.get('/:id', playerController.getPlayerById);
