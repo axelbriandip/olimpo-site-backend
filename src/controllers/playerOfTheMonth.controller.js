@@ -1,15 +1,15 @@
 // src/controllers/playerOfTheMonth.controller.js
 const { PlayerOfTheMonth, Player } = require('../models'); // Importa ambos modelos
 
-// Obtener todos los Jugadores del Mes
+// Obtener todos los Jugadores del Mes activos
 const getAllPlayersOfTheMonth = async (req, res) => {
     try {
         const playersOfTheMonth = await PlayerOfTheMonth.findAll({
-            where: { is_active: true },
+            where: { is_active: true }, // Filtra por jugadores del mes activos
             include: [{
                 model: Player,
-                as: 'player', // Usa el alias definido en la asociación
-                attributes: ['id', 'firstName', 'lastName', 'position', 'photo'], // Limita los atributos del jugador
+                as: 'player', // Alias 'player' debe coincidir con el definido en src/models/index.js
+                attributes: ['id', 'firstName', 'lastName', 'position', 'photoUrl'], // <--- ¡CORREGIDO A 'photoUrl'!
                 where: { is_active: true }, // Asegura que solo traes jugadores activos
                 required: true, // INNER JOIN: solo trae Jugadores del Mes si el jugador asociado existe y está activo
             }],
@@ -29,11 +29,11 @@ const getAllPlayersOfTheMonth = async (req, res) => {
 const getPlayerOfTheMonthById = async (req, res) => {
     try {
         const playerOfTheMonth = await PlayerOfTheMonth.findByPk(req.params.id, {
-            where: { is_active: true },
+            where: { is_active: true }, // Filtra por activo
             include: [{
                 model: Player,
                 as: 'player',
-                attributes: ['id', 'firstName', 'lastName', 'position', 'photo'],
+                attributes: ['id', 'firstName', 'lastName', 'position', 'photoUrl'], // <--- ¡CORREGIDO A 'photoUrl'!
                 where: { is_active: true },
                 required: true,
             }],
@@ -50,27 +50,24 @@ const getPlayerOfTheMonthById = async (req, res) => {
 
 // Crear un nuevo Jugador del Mes
 const createPlayerOfTheMonth = async (req, res) => {
-    const { playerId, month, year, highlight, photo } = req.body;
+    const { playerId, month, year, reason } = req.body;
     try {
         const newPlayerOfTheMonth = await PlayerOfTheMonth.create({
             playerId,
             month,
             year,
-            highlight,
-            photo
+            reason
         });
-        // Incluir los datos del jugador en la respuesta para confirmación
         await newPlayerOfTheMonth.reload({
             include: [{
                 model: Player,
                 as: 'player',
-                attributes: ['id', 'firstName', 'lastName', 'position', 'photo']
+                attributes: ['id', 'firstName', 'lastName', 'position', 'photoUrl'] // <--- ¡CORREGIDO A 'photoUrl'!
             }]
         });
         res.status(201).json(newPlayerOfTheMonth);
     } catch (error) {
         console.error('Error creating player of the month:', error);
-        // Manejo específico para el error de unicidad
         if (error.name === 'SequelizeUniqueConstraintError') {
             return res.status(409).json({ message: 'This player has already been selected as Player of the Month for the given month and year.' });
         }
@@ -81,7 +78,7 @@ const createPlayerOfTheMonth = async (req, res) => {
 // Actualizar un Jugador del Mes existente
 const updatePlayerOfTheMonth = async (req, res) => {
     const { id } = req.params;
-    const { playerId, month, year, highlight, photo } = req.body;
+    const { playerId, month, year, reason } = req.body;
     try {
         const playerOfTheMonth = await PlayerOfTheMonth.findByPk(id, {
             where: { is_active: true }
@@ -91,13 +88,12 @@ const updatePlayerOfTheMonth = async (req, res) => {
             return res.status(404).json({ message: 'Player of the month not found' });
         }
 
-        await playerOfTheMonth.update({ playerId, month, year, highlight, photo });
-        // Incluir los datos del jugador en la respuesta para confirmación
+        await playerOfTheMonth.update({ playerId, month, year, reason });
         await playerOfTheMonth.reload({
             include: [{
                 model: Player,
                 as: 'player',
-                attributes: ['id', 'firstName', 'lastName', 'position', 'photo']
+                attributes: ['id', 'firstName', 'lastName', 'position', 'photoUrl'] // <--- ¡CORREGIDO A 'photoUrl'!
             }]
         });
         res.json(playerOfTheMonth);

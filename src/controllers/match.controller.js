@@ -1,68 +1,248 @@
-const Match = require('../models/match.model');
+// src/controllers/match.controller.js
+// Controlador para las operaciones CRUD de Partidos
 
-// Crear partido
-exports.createMatch = async (req, res) => {
-    try {
-        const match = await Match.create(req.body);
-        res.status(201).json(match);
-    } catch (error) {
-        console.error('🔴 Error creating match:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
+const { Match, Team } = require('../models'); // Importa el modelo Match y Team
 
 // Obtener todos los partidos activos
-exports.getAllMatches = async (req, res) => {
+const getAllMatches = async (req, res) => {
     try {
-        const matches = await Match.findAll({ where: { is_active: true } });
-        res.json(matches);
-    } catch (error) {
-        console.error('🔴 Error fetching matches:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Obtener partido por ID
-exports.getMatchById = async (req, res) => {
-    try {
-        const match = await Match.findOne({
-            where: {
-                id: req.params.id,
-                is_active: true
-            }
+        const matches = await Match.findAll({
+            where: { is_active: true }, // Filtra solo los partidos activos
+            include: [
+                {
+                    model: Team,
+                    as: 'homeTeam', // Alias para el equipo local, definido en la asociación
+                    attributes: ['id', 'name', 'logoUrl'], // Atributos del equipo que quieres incluir
+                    required: true, // INNER JOIN: solo trae partidos si el equipo local existe
+                },
+                {
+                    model: Team,
+                    as: 'awayTeam', // Alias para el equipo visitante, definido en la asociación
+                    attributes: ['id', 'name', 'logoUrl'], // Atributos del equipo que quieres incluir
+                    required: true, // INNER JOIN: solo trae partidos si el equipo visitante existe
+                },
+            ],
+            order: [
+                ['dateTime', 'DESC'], // Ordena los partidos por fecha y hora descendente
+            ],
         });
-        if (!match) return res.status(404).json({ error: 'Match not found' });
-        res.json(match);
+        res.status(200).json(matches);
     } catch (error) {
-        console.error('🔴 Error fetching match:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error al obtener partidos:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al obtener partidos.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
-// Actualizar partido
-exports.updateMatch = async (req, res) => {
+// Obtener un partido por ID
+const getMatchById = async (req, res) => {
     try {
-        const match = await Match.findByPk(req.params.id);
-        if (!match || !match.is_active) return res.status(404).json({ error: 'Match not found' });
-
-        await match.update(req.body);
-        res.json(match);
+        const match = await Match.findByPk(req.params.id, {
+            where: { is_active: true }, // Asegura que solo se obtienen partidos activos
+            include: [
+                {
+                    model: Team,
+                    as: 'homeTeam',
+                    attributes: ['id', 'name', 'logoUrl'],
+                    required: true,
+                },
+                {
+                    model: Team,
+                    as: 'awayTeam',
+                    attributes: ['id', 'name', 'logoUrl'],
+                    required: true,
+                },
+            ],
+        });
+        if (!match || !match.is_active) {
+            return res.status(404).json({ message: 'Partido no encontrado o inactivo.' });
+        }
+        res.status(200).json(match);
     } catch (error) {
-        console.error('🔴 Error updating match:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error al obtener partido por ID:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al obtener partido por ID.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
-// Soft delete (set is_active = false)
-exports.deleteMatch = async (req, res) => {
+// Crear un nuevo partido
+const createMatch = async (req, res) => {
+    const {
+        dateTime,
+        homeTeamId,
+        homeTeamScore,
+        awayTeamId,
+        awayTeamScore,
+        location,
+        matchType,
+        status,
+        round,
+        highlightsUrl,
+        liveStreamUrl,
+        description,
+        is_active,
+        metaTitle,
+        metaDescription,
+    } = req.body;
+
+    try {
+        // Opcional: Verificar que los TeamId existan antes de crear el partido
+        const homeTeam = await Team.findByPk(homeTeamId);
+        const awayTeam = await Team.findByPk(awayTeamId);
+        if (!homeTeam || !awayTeam) {
+            return res.status(400).json({ message: 'Uno o ambos equipos (local/visitante) no existen.' });
+        }
+
+        const newMatch = await Match.create({
+            dateTime,
+            homeTeamId,
+            homeTeamScore,
+            awayTeamId,
+            awayTeamScore,
+            location,
+            matchType,
+            status,
+            round,
+            highlightsUrl,
+            liveStreamUrl,
+            description,
+            is_active: is_active !== undefined ? is_active : true,
+            metaTitle,
+            metaDescription,
+        });
+
+        // Recarga el objeto para incluir los datos completos de los equipos en la respuesta
+        await newMatch.reload({
+            include: [
+                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'logoUrl'] },
+                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'logoUrl'] },
+            ],
+        });
+
+        res.status(201).json(newMatch); // 201 Created
+    } catch (error) {
+        console.error('Error al crear partido:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al crear partido.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
+    }
+};
+
+// Actualizar un partido existente
+const updateMatch = async (req, res) => {
+    const { id } = req.params;
+    const {
+        dateTime,
+        homeTeamId,
+        homeTeamScore,
+        awayTeamId,
+        awayTeamScore,
+        location,
+        matchType,
+        status,
+        round,
+        highlightsUrl,
+        liveStreamUrl,
+        description,
+        is_active,
+        metaTitle,
+        metaDescription,
+    } = req.body;
+
+    try {
+        const match = await Match.findByPk(id);
+        if (!match) {
+            return res.status(404).json({ message: 'Partido no encontrado.' });
+        }
+
+        // Opcional: Verificar que los nuevos TeamId existan si se están cambiando
+        if (homeTeamId && homeTeamId !== match.homeTeamId) {
+            const homeTeam = await Team.findByPk(homeTeamId);
+            if (!homeTeam) return res.status(400).json({ message: 'El nuevo equipo local no existe.' });
+        }
+        if (awayTeamId && awayTeamId !== match.awayTeamId) {
+            const awayTeam = await Team.findByPk(awayTeamId);
+            if (!awayTeam) return res.status(400).json({ message: 'El nuevo equipo visitante no existe.' });
+        }
+
+        const updateData = {
+            dateTime,
+            homeTeamId,
+            homeTeamScore,
+            awayTeamId,
+            awayTeamScore,
+            location,
+            matchType,
+            status,
+            round,
+            highlightsUrl,
+            liveStreamUrl,
+            description,
+            is_active,
+            metaTitle,
+            metaDescription,
+        };
+
+        // Elimina los campos undefined para que Sequelize no intente actualizarlos a nulo
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+        await match.update(updateData);
+
+        // Recarga el objeto para incluir los datos completos de los equipos en la respuesta
+        await match.reload({
+            include: [
+                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'logoUrl'] },
+                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'logoUrl'] },
+            ],
+        });
+
+        res.status(200).json(match);
+    } catch (error) {
+        console.error('Error al actualizar partido:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al actualizar partido.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
+    }
+};
+
+// Borrado suave de un partido (establece is_active en false)
+const softDeleteMatch = async (req, res) => {
     try {
         const match = await Match.findByPk(req.params.id);
-        if (!match || !match.is_active) return res.status(404).json({ error: 'Match not found' });
+        if (!match) {
+            return res.status(404).json({ message: 'Partido no encontrado.' });
+        }
+        if (!match.is_active) {
+            return res.status(400).json({ message: 'El partido ya está inactivo.' });
+        }
 
-        await match.update({ is_active: false });
-        res.json({ message: 'Match soft deleted successfully' });
+        match.is_active = false;
+        await match.save();
+        res.status(200).json({ message: 'Partido desactivado exitosamente.' });
     } catch (error) {
-        console.error('🔴 Error deleting match:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error al desactivar partido:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al desactivar partido.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
+};
+
+module.exports = {
+    getAllMatches,
+    getMatchById,
+    createMatch,
+    updateMatch,
+    softDeleteMatch,
 };

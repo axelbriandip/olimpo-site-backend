@@ -14,8 +14,8 @@ const newsRoutes = require('./routes/news.routes');
 const playerRoutes = require('./routes/player.routes');
 const playerOfTheMonthRoutes = require('./routes/playerOfTheMonth.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
-// NUEVA RUTA DE UPLOAD
-const uploadRoutes = require('./routes/upload.routes'); // <--- NUEVO
+const uploadRoutes = require('./routes/upload.routes');
+const historySubsectionRoutes = require('./src/routes/historySubsection.routes');
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.use(morgan('dev')); // Logger de peticiones HTTP
 
 // Configurar Express para servir archivos estáticos desde la carpeta 'public'
 // Esto hará que http://localhost:3000/uploads/players/nombre_imagen.jpg funcione
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'))); // <--- NUEVO
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
@@ -39,9 +39,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/players', playerRoutes);
 app.use('/api/players-of-the-month', playerOfTheMonthRoutes);
 app.use('/api/testimonials', testimonialRoutes);
-// Ruta de subida de archivos
-app.use('/api', uploadRoutes); // <--- NUEVO (puedes ajustar el prefijo de la ruta si quieres)
-
-// ... (resto de tu configuración de servidor y conexión a DB)
+app.use('/api', uploadRoutes);
+app.use('/api/history-subsections', historySubsectionRoutes);
 
 module.exports = app;

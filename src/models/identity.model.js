@@ -1,68 +1,67 @@
 // src/models/identity.model.js
+// Definición del modelo para la identidad institucional del club (Misión, Visión, Valores)
 
-// SOLO necesitas DataTypes aquí.
-// NO importes 'sequelize' aquí, ya que se te pasará como argumento.
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => { // <-- **ESTA ES LA CLAVE: Exporta una FUNCIÓN**
+module.exports = (sequelize, DataTypes) => {
     const Identity = sequelize.define('Identity', {
-        id: { // Un ID es crucial, aunque no lo tuvieras antes. Sequelize lo añade por defecto, pero es buena práctica.
+        // Identificador único del registro de identidad. Clave primaria y autoincrementa.
+        // Asume que solo habrá un único registro para la identidad del club.
+        id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-        },
-        mainTitle: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        mainDescription: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-        },
-        missionIcon: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        missionTitle: {
-            type: DataTypes.STRING,
-            allowNull: false,
+            comment: 'Identificador único del registro de identidad institucional.',
         },
         missionText: {
             type: DataTypes.TEXT,
             allowNull: false,
+            comment: 'Texto descriptivo de la Misión del club.',
         },
-        visionIcon: {
-            type: DataTypes.STRING,
-            allowNull: false,
+        // URL de la imagen principal para la sección de Misión. (Nuevo campo)
+        missionImageUrl: {
+            type: DataTypes.STRING(255),
+            allowNull: true, // Puede ser nulo si no siempre hay una imagen
+            comment: 'URL de la imagen principal para la sección de Misión.',
         },
-        visionTitle: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
+        // Texto descriptivo de la Visión.
         visionText: {
             type: DataTypes.TEXT,
             allowNull: false,
+            comment: 'Texto descriptivo de la Visión del club.',
         },
-        valuesIcon: {
-            type: DataTypes.STRING,
-            allowNull: false,
+        // URL de la imagen principal para la sección de Visión. (Nuevo campo)
+        visionImageUrl: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'URL de la imagen principal para la sección de Visión.',
         },
-        valuesTitle: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
+        // Texto descriptivo de los Valores.
         valuesText: {
             type: DataTypes.TEXT,
             allowNull: false,
+            comment: 'Texto descriptivo de los Valores del club.',
         },
-        // Añade cualquier otro campo que tengas en tu modelo Identity
+        // URL de la imagen principal para la sección de Valores. (Nuevo campo)
+        valuesImageUrl: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'URL de la imagen principal para la sección de Valores.',
+        },
+        // Indica si este registro de identidad está activo. Por defecto es true.
+        // Útil si se quiere tener una "versión" inactiva o un borrado suave.
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            comment: 'Indica si este registro de identidad está activo. Usado para borrado suave.',
+        },
     }, {
-        timestamps: true, // Para createdAt y updatedAt
-        tableName: 'Identities' // Asegúrate de que el nombre de la tabla sea 'Identities' o el que uses en tu DB
+        // Opciones del modelo de Sequelize
+        timestamps: true, // Agrega automáticamente las columnas `createdAt` y `updatedAt`
+        tableName: 'Identities', // Nombre real de la tabla en la base de datos
+        comment: 'Tabla para almacenar la información de identidad institucional del club (Misión, Visión, Valores).',
+        // No se incluyen 'indexes' ni 'createdBy/updatedBy' según lo solicitado.
     });
 
-    // Si tienes asociaciones relacionadas con Identity, pero las defines en index.js,
-    // no necesitas el método .associate aquí.
-
-    return Identity; // <-- La función DEBE DEVOLVER el modelo definido
+    return Identity;
 };

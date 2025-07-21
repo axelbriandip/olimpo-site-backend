@@ -1,7 +1,8 @@
 // src/models/player.model.js
+// Este archivo define la estructura de la tabla 'Players'
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => { // Exporta una función que recibe sequelize y DataTypes
+module.exports = (sequelize, DataTypes) => {
     const Player = sequelize.define('Player', {
         id: {
             type: DataTypes.INTEGER,
@@ -22,47 +23,28 @@ module.exports = (sequelize, DataTypes) => { // Exporta una función que recibe 
         },
         number: {
             type: DataTypes.INTEGER,
-            allowNull: true, // El número de camiseta podría ser opcional
+            allowNull: true,
         },
         dateOfBirth: {
-            type: DataTypes.DATEONLY, // Formato YYYY-MM-DD
+            type: DataTypes.DATEONLY,
             allowNull: true,
         },
         nationality: {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        photoUrl: { // Este es el campo que añadimos para la URL de la imagen del jugador
+        photoUrl: { // ¡Este campo es crucial y debe existir en tu DB!
             type: DataTypes.STRING,
-            allowNull: true, // Permitir nulo si la foto no es obligatoria
+            allowNull: true,
         },
         is_active: {
             type: DataTypes.BOOLEAN,
-            defaultValue: true, // Asume que por defecto un jugador está activo
+            defaultValue: true,
         },
-        // Añade aquí cualquier otro campo que tengas para Player
-        // For example:
-        // status: {
-        //   type: DataTypes.STRING, // e.g., 'active', 'injured', 'retired'
-        //   allowNull: true,
-        // },
     }, {
-        timestamps: true, // Para createdAt y updatedAt
-        tableName: 'Players' // Asegúrate de que coincida con el nombre de tu tabla en la DB
+        timestamps: true,
+        tableName: 'Players'
     });
 
-    // Si utilizas las asociaciones centralizadas en index.js, no necesitas .associate aquí.
-    // Pero si en el futuro decides usarlo, sería así:
-    /*
-    Player.associate = (models) => {
-      Player.hasMany(models.PlayerOfTheMonth, {
-        foreignKey: 'playerId',
-        as: 'playerOfTheMonthAwards',
-      });
-      // Si un jugador pertenece a un equipo
-      // Player.belongsTo(models.Team, { foreignKey: 'teamId', as: 'team' });
-    };
-    */
-
-    return Player; // Retorna el modelo definido
+    return Player;
 };

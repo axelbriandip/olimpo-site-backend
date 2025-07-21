@@ -1,145 +1,176 @@
 // src/controllers/historyEvent.controller.js
-const { HistoryEvent, HistorySubsection } = require('../models'); // Importa ambos modelos
+// Controlador para las operaciones CRUD de Eventos Históricos
 
+const { HistoryEvent } = require('../models'); // Importa el modelo HistoryEvent
+
+// Obtener todos los eventos históricos activos
 const getAllHistoryEvents = async (req, res) => {
     try {
         const events = await HistoryEvent.findAll({
-            where: { is_active: true },
-            // ¡Aquí es donde incluimos las subsecciones!
-            include: [{
-                model: HistorySubsection,
-                as: 'subsections', // Usa el alias definido en la asociación
-                where: { is_active: true }, // Asegura que solo traes subsecciones activas
-                required: false, // Usamos false para un LEFT JOIN, así traemos eventos sin subsecciones
-                attributes: ['title', 'text', 'img'], // Puedes limitar los atributos que traes
-            }],
+            where: { is_active: true }, // Filtra solo los eventos activos
             order: [
-                ['createdAt', 'ASC'], // O por 'dateText' si parseas las fechas para ordenar
-                [{ model: HistorySubsection, as: 'subsections' }, 'createdAt', 'ASC'] // Ordena subsecciones
+                ['year', 'DESC'], // Ordena por año descendente
+                ['month', 'DESC'], // Luego por mes descendente
+                ['day', 'DESC'], // Finalmente por día descendente
+                ['displayOrder', 'ASC'] // Y por displayOrder ascendente
             ],
         });
-        res.json(events);
+        res.status(200).json(events);
     } catch (error) {
-        console.error('Error retrieving history events:', error);
-        res.status(500).json({ message: 'Error retrieving history events', error: error.message });
+        console.error('Error al obtener eventos históricos:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al obtener eventos históricos.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
+// Obtener un evento histórico por ID
 const getHistoryEventById = async (req, res) => {
     try {
         const event = await HistoryEvent.findByPk(req.params.id, {
-            where: { is_active: true },
-            include: [{
-                model: HistorySubsection,
-                as: 'subsections',
-                where: { is_active: true },
-                required: false,
-                attributes: ['title', 'text', 'img'],
-            }],
+            where: { is_active: true }, // Asegura que solo se obtienen eventos activos
         });
         if (!event || !event.is_active) {
-            return res.status(404).json({ message: 'History event not found' });
+            return res.status(404).json({ message: 'Evento histórico no encontrado o inactivo.' });
         }
-        res.json(event);
+        res.status(200).json(event);
     } catch (error) {
-        console.error('Error retrieving history event by ID:', error);
-        res.status(500).json({ message: 'Error retrieving history event', error: error.message });
+        console.error('Error al obtener evento histórico por ID:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al obtener evento histórico por ID.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
+// Crear un nuevo evento histórico
 const createHistoryEvent = async (req, res) => {
-    const { title, dateText, description, subsections } = req.body;
-    try {
-        const newEvent = await HistoryEvent.create({ title, dateText, description });
+    // Desestructura solo los campos que el modelo HistoryEvent ahora acepta
+    const {
+        title,
+        year,
+        month,
+        day,
+        description,
+        imageUrl,
+        slug,
+        is_active,
+        displayOrder,
+        metaTitle,
+        metaDescription,
+    } = req.body;
 
-        if (subsections && subsections.length > 0) {
-            // Asigna el ID del evento recién creado a cada subsección
-            const subsectionsWithEventId = subsections.map(sub => ({
-                ...sub,
-                historyEventId: newEvent.id // Clave foránea
-            }));
-            await HistorySubsection.bulkCreate(subsectionsWithEventId);
-            // Vuelve a cargar el evento con las subsecciones para la respuesta
-            await newEvent.reload({
-                include: [{
-                    model: HistorySubsection,
-                    as: 'subsections',
-                    attributes: ['title', 'text', 'img']
-                }]
-            });
-        }
-        res.status(201).json(newEvent);
+    try {
+        // Genera el slug automáticamente si no se proporciona
+        const finalSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '');
+
+        const newEvent = await HistoryEvent.create({
+            title,
+            year,
+            month,
+            day,
+            description,
+            imageUrl,
+            slug: finalSlug,
+            is_active: is_active !== undefined ? is_active : true, // Permite especificar is_active, por defecto true
+            displayOrder,
+            metaTitle,
+            metaDescription,
+        });
+        res.status(201).json(newEvent); // 201 Created
     } catch (error) {
-        console.error('Error creating history event:', error);
-        res.status(500).json({ message: 'Error creating history event', error: error.message });
+        console.error('Error al crear evento histórico:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ message: 'El título o el slug del evento histórico ya existe.', errors: error.errors });
+        }
+        res.status(500).json({
+            message: 'Error interno del servidor al crear evento histórico.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
+// Actualizar un evento histórico existente
 const updateHistoryEvent = async (req, res) => {
     const { id } = req.params;
-    const { title, dateText, description, subsections } = req.body;
+    const {
+        title,
+        year,
+        month,
+        day,
+        description,
+        imageUrl,
+        slug,
+        is_active,
+        displayOrder,
+        metaTitle,
+        metaDescription,
+    } = req.body;
+
     try {
-        const event = await HistoryEvent.findByPk(id, {
-            where: { is_active: true },
-            include: [{ model: HistorySubsection, as: 'subsections' }]
-        });
-
-        if (!event || !event.is_active) {
-            return res.status(404).json({ message: 'History event not found' });
+        const event = await HistoryEvent.findByPk(id);
+        if (!event) {
+            return res.status(404).json({ message: 'Evento histórico no encontrado.' });
         }
 
-        await event.update({ title, dateText, description });
+        // Prepara el objeto con los campos a actualizar
+        const updateData = {
+            title,
+            year,
+            month,
+            day,
+            description,
+            imageUrl,
+            slug,
+            is_active,
+            displayOrder,
+            metaTitle,
+            metaDescription,
+        };
 
-        // Lógica para actualizar las subsecciones
-        if (subsections !== undefined) { // Permite borrar todas si subsections es []
-            // Primero, eliminamos las subsecciones existentes (o las marcamos como inactivas)
-            // Para simplificar, vamos a borrarlas y recrearlas, pero podrías hacer un update más inteligente.
-            await HistorySubsection.destroy({
-                where: { historyEventId: event.id }
-            });
+        // Elimina los campos undefined para que Sequelize no intente actualizarlos a nulo
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
-            if (subsections.length > 0) {
-                const subsectionsToCreate = subsections.map(sub => ({
-                    ...sub,
-                    historyEventId: event.id
-                }));
-                await HistorySubsection.bulkCreate(subsectionsToCreate);
-            }
-            // Vuelve a cargar el evento con las subsecciones actualizadas
-            await event.reload({
-                include: [{
-                    model: HistorySubsection,
-                    as: 'subsections',
-                    attributes: ['title', 'text', 'img']
-                }]
-            });
-        }
-        res.json(event);
+        await event.update(updateData);
+        res.status(200).json(event);
     } catch (error) {
-        console.error('Error updating history event:', error);
-        res.status(500).json({ message: 'Error updating history event', error: error.message });
+        console.error('Error al actualizar evento histórico:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ message: 'El título o el slug del evento histórico ya existe.', errors: error.errors });
+        }
+        res.status(500).json({
+            message: 'Error interno del servidor al actualizar evento histórico.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
+// Borrado suave de un evento histórico (establece is_active en false)
 const softDeleteHistoryEvent = async (req, res) => {
     try {
         const event = await HistoryEvent.findByPk(req.params.id);
-        if (!event || !event.is_active) {
-            return res.status(404).json({ message: 'History event not found' });
+        if (!event) {
+            return res.status(404).json({ message: 'Evento histórico no encontrado.' });
         }
+        if (!event.is_active) {
+            return res.status(400).json({ message: 'El evento histórico ya está inactivo.' });
+        }
+
         event.is_active = false;
         await event.save();
-
-        // Opcional: También desactivar todas las subsecciones asociadas
-        await HistorySubsection.update(
-            { is_active: false },
-            { where: { historyEventId: event.id } }
-        );
-
-        res.json({ message: 'History event deactivated successfully' });
+        res.status(200).json({ message: 'Evento histórico desactivado exitosamente.' });
     } catch (error) {
-        console.error('Error deactivating history event:', error);
-        res.status(500).json({ message: 'Error deactivating history event', error: error.message });
+        console.error('Error al desactivar evento histórico:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor al desactivar evento histórico.',
+            errorName: error.name,
+            errorMessage: error.message,
+        });
     }
 };
 
