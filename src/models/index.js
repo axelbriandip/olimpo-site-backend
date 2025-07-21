@@ -14,7 +14,7 @@ const Identity = require('./identity.model')(sequelize, DataTypes);
 const Match = require('./match.model')(sequelize, DataTypes);
 const News = require('./news.model')(sequelize, DataTypes);
 const Player = require('./player.model')(sequelize, DataTypes);
-const PlayerOfTheMonth = require('./playerOfTheMonth.model')(sequelize, DataTypes);
+const MonthlyPlayer = require('./monthlyPlayer.model')(sequelize, DataTypes); // Nombre actualizado
 const Testimonial = require('./testimonial.model')(sequelize, DataTypes);
 const User = require('./user.model')(sequelize, DataTypes);
 const Team = require('./team.model')(sequelize, DataTypes);
@@ -24,65 +24,78 @@ const Team = require('./team.model')(sequelize, DataTypes);
 // Define todas las asociaciones aquí después de que todos los modelos estén cargados
 // y disponibles como variables.
 
-// News and Category (Many-to-Many)
+// Asociación entre News y Category (Many-to-Many)
 News.belongsToMany(Category, {
-    through: 'NewsCategories',
-    as: 'categories',
+    through: 'NewsCategories', // Tabla intermedia para la relación N:M
+    as: 'categories', // Alias para acceder a las categorías desde una noticia
     foreignKey: 'newsId',
-    otherKey: 'categoryId'
+    otherKey: 'categoryId',
+    comment: 'Asociación N:M entre Noticias y Categorías.'
 });
 Category.belongsToMany(News, {
     through: 'NewsCategories',
-    as: 'news',
+    as: 'news', // Alias para acceder a las noticias desde una categoría
     foreignKey: 'categoryId',
-    otherKey: 'newsId'
+    otherKey: 'newsId',
+    comment: 'Asociación N:M entre Categorías y Noticias.'
 });
 
-// HistoryEvent and HistorySubsection (One-to-Many)
+// Asociación entre HistoryEvent y HistorySubsection (One-to-Many)
+// Un evento histórico puede tener muchas subsecciones.
 HistoryEvent.hasMany(HistorySubsection, {
     foreignKey: 'historyEventId',
-    as: 'subsections',
-    onDelete: 'CASCADE',
+    as: 'subsections', // Alias para acceder a las subsecciones desde un evento
+    onDelete: 'CASCADE', // Si se elimina el evento, sus subsecciones también se eliminan
+    onUpdate: 'CASCADE',
+    comment: 'Un evento histórico tiene muchas subsecciones.'
 });
+// Una subsección pertenece a un evento histórico.
 HistorySubsection.belongsTo(HistoryEvent, {
     foreignKey: 'historyEventId',
-    as: 'historyEvent',
+    as: 'historyEvent', // Alias para acceder al evento desde una subsección
+    comment: 'Una subsección histórica pertenece a un evento histórico.'
 });
 
-// PlayerOfTheMonth and Player (Many-to-One)
-// Un PlayerOfTheMonth pertenece a un Player
-PlayerOfTheMonth.belongsTo(Player, {
+// Asociación entre MonthlyPlayer y Player (Many-to-One)
+// Un MonthlyPlayer pertenece a un Player.
+MonthlyPlayer.belongsTo(Player, {
     foreignKey: 'playerId',
     as: 'player', // Este alias 'player' DEBE coincidir con el 'as' en el controlador
+    comment: 'Un Jugador Mensual pertenece a un Jugador.'
 });
-// Un Player puede ser Jugador del Mes varias veces (opcional, para la relación inversa)
-Player.hasMany(PlayerOfTheMonth, {
+// Un Player puede ser Jugador Mensual varias veces (opcional, para la relación inversa).
+Player.hasMany(MonthlyPlayer, {
     foreignKey: 'playerId',
-    as: 'playerOfTheMonthAwards',
+    as: 'monthlyPlayerAwards', // Alias para acceder a los premios desde un jugador
+    comment: 'Un Jugador puede tener múltiples premios de Jugador Mensual.'
 });
 
-// Match and Team (Many-to-One para homeTeam y awayTeam)
-// Estas asociaciones requieren que el modelo 'Team' esté definido y exportado.
-// Las dejo aquí comentadas hasta que hayamos finalizado el modelo Team.
-if (Team) { // Solo define si el modelo Team ya está cargado
-    Match.belongsTo(Team, {
-        foreignKey: 'homeTeamId',
-        as: 'homeTeam',
-    });
-    Match.belongsTo(Team, {
-        foreignKey: 'awayTeamId',
-        as: 'awayTeam',
-    });
-    // Relaciones inversas (opcionales, para acceder a los partidos desde un equipo)
-    Team.hasMany(Match, {
-        foreignKey: 'homeTeamId',
-        as: 'homeMatches',
-    });
-    Team.hasMany(Match, {
-        foreignKey: 'awayTeamId',
-        as: 'awayMatches',
-    });
-}
+// Asociación entre Match y Team (Many-to-One para homeTeam y awayTeam)
+Match.belongsTo(Team, {
+    foreignKey: 'homeTeamId',
+    as: 'homeTeam', // Alias para acceder al equipo local desde un partido
+    comment: 'Un partido tiene un equipo local.',
+});
+Match.belongsTo(Team, {
+    foreignKey: 'awayTeamId',
+    as: 'awayTeam', // Alias para acceder al equipo visitante desde un partido
+    comment: 'Un partido tiene un equipo visitante.',
+});
+// Relaciones inversas (opcionales, para acceder a los partidos desde un equipo)
+Team.hasMany(Match, {
+    foreignKey: 'homeTeamId',
+    as: 'homeMatches',
+    comment: 'Un equipo puede ser el equipo local en muchos partidos.'
+});
+Team.hasMany(Match, {
+    foreignKey: 'awayTeamId',
+    as: 'awayMatches',
+    comment: 'Un equipo puede ser el equipo visitante en muchos partidos.'
+});
+
+// La asociación Player y Team NO está incluida aquí, como acordamos,
+// dado que el campo teamId fue eliminado del modelo Player.
+
 
 // --- Exportar los Modelos Instanciados ---
 // Exporta todos los modelos y la instancia de Sequelize.
@@ -95,7 +108,7 @@ module.exports = {
     Match,
     News,
     Player,
-    PlayerOfTheMonth,
+    MonthlyPlayer, // Nombre actualizado
     Testimonial,
     User,
     Team,

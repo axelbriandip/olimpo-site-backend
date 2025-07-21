@@ -12,10 +12,10 @@ const identityRoutes = require('./routes/identity.routes');
 const matchRoutes = require('./routes/match.routes');
 const newsRoutes = require('./routes/news.routes');
 const playerRoutes = require('./routes/player.routes');
-const playerOfTheMonthRoutes = require('./routes/playerOfTheMonth.routes');
+const monthlyPlayer = require('./routes/monthlyPlayer.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
 const uploadRoutes = require('./routes/upload.routes');
-const historySubsectionRoutes = require('./src/routes/historySubsection.routes');
+const historySubsectionRoutes = require('./routes/historySubsection.routes');
 
 const app = express();
 
@@ -37,7 +37,7 @@ app.use('/api/identity', identityRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/players', playerRoutes);
-app.use('/api/players-of-the-month', playerOfTheMonthRoutes);
+app.use('/api/monthly-player', monthlyPlayer);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api/history-subsections', historySubsectionRoutes);
