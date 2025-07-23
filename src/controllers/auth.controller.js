@@ -50,7 +50,7 @@ const loginUser = async (req, res) => {
         const token = jwt.sign(
             { id: user.id, username: user.username },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' } // El token expira en 1 hora
+            { expiresIn: '1d' } // El token expira en 1 hora
         );
 
         // No devolver la contraseña hasheada

@@ -16,6 +16,7 @@ const monthlyPlayer = require('./routes/monthlyPlayer.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const historySubsectionRoutes = require('./routes/historySubsection.routes');
+const teamsRoutes = require('./routes/team.routes');
 
 const app = express();
 
@@ -41,5 +42,6 @@ app.use('/api/monthly-player', monthlyPlayer);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api/history-subsections', historySubsectionRoutes);
+app.use('/api/teams', teamsRoutes);
 
 module.exports = app;

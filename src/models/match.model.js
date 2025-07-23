@@ -15,8 +15,23 @@ module.exports = (sequelize, DataTypes) => {
         // Fecha y hora del partido. No puede ser nulo.
         dateTime: {
             type: DataTypes.DATE,
-            allowNull: false,
+            allowNull: true,
             comment: 'Fecha y hora del partido.',
+        },
+        // Categoría del partido (ej. Primera, Sub17, Sub15, etc.)
+        category: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            // validate: {
+            //     isIn: [['Primera', 'Sub17', 'Sub15', 'Sub13', 'Sub11', 'Sub9', 'Sub7']],
+            // },
+            comment: 'Categoría a la cual pertenece el partido.',
+        },
+        // Sirve para ordenar la visualización de los partidos.
+        order: {
+            type: DataTypes.INTEGER,
+            allowNull: false, // El orden debe ser siempre un número
+            comment: 'Orden de visualización del partido. Permite control manual y auto-asignación.',
         },
         // ID del equipo local (referencia al modelo Team).
         // Este campo es crucial para la normalización.

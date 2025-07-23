@@ -2,6 +2,7 @@
 // Controlador para las operaciones CRUD de Partidos
 
 const { Match, Team } = require('../models'); // Importa el modelo Match y Team
+const { Op } = require('sequelize'); // Importar Op para operadores de Sequelize
 
 // Obtener todos los partidos activos
 const getAllMatches = async (req, res) => {
@@ -12,18 +13,20 @@ const getAllMatches = async (req, res) => {
                 {
                     model: Team,
                     as: 'homeTeam', // Alias para el equipo local, definido en la asociación
-                    attributes: ['id', 'name', 'logoUrl'], // Atributos del equipo que quieres incluir
+                    attributes: ['id', 'name', 'originalLogoUrl'],
                     required: true, // INNER JOIN: solo trae partidos si el equipo local existe
                 },
                 {
                     model: Team,
                     as: 'awayTeam', // Alias para el equipo visitante, definido en la asociación
-                    attributes: ['id', 'name', 'logoUrl'], // Atributos del equipo que quieres incluir
+                    attributes: ['id', 'name', 'originalLogoUrl'],
                     required: true, // INNER JOIN: solo trae partidos si el equipo visitante existe
                 },
             ],
             order: [
-                ['dateTime', 'DESC'], // Ordena los partidos por fecha y hora descendente
+                ['order', 'ASC'], // <-- NUEVO: Ordena primero por el campo 'order' de forma ascendente
+                ['dateTime', 'ASC'], // <-- CAMBIADO: Luego por fecha y hora ascendente para próximos
+                ['id', 'ASC'] // <-- NUEVO: Como desempate final
             ],
         });
         res.status(200).json(matches);
@@ -46,15 +49,21 @@ const getMatchById = async (req, res) => {
                 {
                     model: Team,
                     as: 'homeTeam',
-                    attributes: ['id', 'name', 'logoUrl'],
+                    attributes: ['id', 'name', 'originalLogoUrl'],
                     required: true,
                 },
                 {
                     model: Team,
                     as: 'awayTeam',
-                    attributes: ['id', 'name', 'logoUrl'],
+                    attributes: ['id', 'name', 'originalLogoUrl'],
                     required: true,
                 },
+            ],
+            // El ordenamiento no es tan crítico para una búsqueda por PK, pero lo mantengo por consistencia
+            order: [
+                ['order', 'ASC'],
+                ['dateTime', 'ASC'],
+                ['id', 'ASC']
             ],
         });
         if (!match || !match.is_active) {
@@ -75,6 +84,7 @@ const getMatchById = async (req, res) => {
 const createMatch = async (req, res) => {
     const {
         dateTime,
+        category, // Ya estaba, solo para confirmación
         homeTeamId,
         homeTeamScore,
         awayTeamId,
@@ -89,6 +99,7 @@ const createMatch = async (req, res) => {
         is_active,
         metaTitle,
         metaDescription,
+        // No desestructuramos 'order' aquí porque lo calcularemos
     } = req.body;
 
     try {
@@ -99,8 +110,26 @@ const createMatch = async (req, res) => {
             return res.status(400).json({ message: 'Uno o ambos equipos (local/visitante) no existen.' });
         }
 
+        // --- Lógica para asignar el campo 'order' automáticamente ---
+        let nextOrderValue;
+        const lastMatch = await Match.findOne({
+            order: [['order', 'DESC']], // Busca el partido con el order más alto
+            attributes: ['order'], // Solo necesitamos el campo 'order'
+            where: { is_active: true } // Opcional: solo considerar partidos activos para el orden
+        });
+
+        if (lastMatch && lastMatch.order !== null && lastMatch.order !== undefined) {
+            // Si hay partidos y el último tiene un 'order' válido, suma 5
+            nextOrderValue = lastMatch.order + 5;
+        } else {
+            // Si no hay partidos o el 'order' del último es nulo/indefinido, empieza en 5
+            nextOrderValue = 5;
+        }
+        // --- Fin de la lógica para asignar 'order' ---
+
         const newMatch = await Match.create({
             dateTime,
+            category, // Asegúrate de que category se pasa
             homeTeamId,
             homeTeamScore,
             awayTeamId,
@@ -115,13 +144,14 @@ const createMatch = async (req, res) => {
             is_active: is_active !== undefined ? is_active : true,
             metaTitle,
             metaDescription,
+            order: nextOrderValue, // <-- ASIGNAMOS EL VALOR CALCULADO AQUÍ
         });
 
         // Recarga el objeto para incluir los datos completos de los equipos en la respuesta
         await newMatch.reload({
             include: [
-                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'logoUrl'] },
-                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'logoUrl'] },
+                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'originalLogoUrl'] },
+                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'originalLogoUrl'] },
             ],
         });
 
@@ -152,6 +182,7 @@ const updateMatch = async (req, res) => {
         highlightsUrl,
         liveStreamUrl,
         description,
+        order,
         is_active,
         metaTitle,
         metaDescription,
@@ -186,6 +217,7 @@ const updateMatch = async (req, res) => {
             highlightsUrl,
             liveStreamUrl,
             description,
+            order,
             is_active,
             metaTitle,
             metaDescription,
@@ -199,8 +231,8 @@ const updateMatch = async (req, res) => {
         // Recarga el objeto para incluir los datos completos de los equipos en la respuesta
         await match.reload({
             include: [
-                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'logoUrl'] },
-                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'logoUrl'] },
+                { model: Team, as: 'homeTeam', attributes: ['id', 'name', 'originalLogoUrl'] }, // ¡CAMBIADO AQUÍ!
+                { model: Team, as: 'awayTeam', attributes: ['id', 'name', 'originalLogoUrl'] }, // ¡CAMBIADO AQUÍ!
             ],
         });
 
