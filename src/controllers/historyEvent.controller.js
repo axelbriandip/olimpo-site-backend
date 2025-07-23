@@ -1,18 +1,28 @@
 // src/controllers/historyEvent.controller.js
 // Controlador para las operaciones CRUD de Eventos Históricos
 
-const { HistoryEvent } = require('../models'); // Importa el modelo HistoryEvent
+const { HistoryEvent, HistorySubsection } = require('../models'); // Importa ambos modelos aquí
 
-// Obtener todos los eventos históricos activos
+// Obtener todos los eventos históricos activos incluyendo sus subsecciones
 const getAllHistoryEvents = async (req, res) => {
     try {
         const events = await HistoryEvent.findAll({
             where: { is_active: true }, // Filtra solo los eventos activos
+            include: [{
+                model: HistorySubsection,
+                as: 'subsections', // Alias definido en src/models/index.js
+                where: { is_active: true }, // Opcional: solo incluir subsecciones activas
+                required: false, // Usar FALSE para LEFT JOIN, así trae eventos aunque no tengan subsecciones
+                // Puedes limitar los atributos de las subsecciones si no necesitas todos
+                attributes: ['id', 'title', 'content', 'imageUrl', 'displayOrder']
+            }],
             order: [
-                ['year', 'DESC'], // Ordena por año descendente
-                ['month', 'DESC'], // Luego por mes descendente
-                ['day', 'DESC'], // Finalmente por día descendente
-                ['displayOrder', 'ASC'] // Y por displayOrder ascendente
+                ['year', 'ASC'], // Cambiado a ascendente para línea de tiempo
+                ['month', 'ASC'], // Luego por mes ascendente
+                ['day', 'ASC'], // Finalmente por día ascendente
+                ['displayOrder', 'ASC'], // Y por displayOrder ascendente
+                // También puedes ordenar las subsecciones dentro de cada evento
+                [{ model: HistorySubsection, as: 'subsections' }, 'displayOrder', 'ASC'] // Ordenar las subsecciones por su displayOrder
             ],
         });
         res.status(200).json(events);
@@ -31,6 +41,13 @@ const getHistoryEventById = async (req, res) => {
     try {
         const event = await HistoryEvent.findByPk(req.params.id, {
             where: { is_active: true }, // Asegura que solo se obtienen eventos activos
+            include: [{ // Incluir subsecciones también para el detalle por ID
+                model: HistorySubsection,
+                as: 'subsections',
+                where: { is_active: true },
+                required: false,
+                attributes: ['id', 'title', 'content', 'imageUrl', 'displayOrder']
+            }]
         });
         if (!event || !event.is_active) {
             return res.status(404).json({ message: 'Evento histórico no encontrado o inactivo.' });
