@@ -1,19 +1,14 @@
 // src/controllers/identity.controller.js
-// Controlador para las operaciones CRUD de la Identidad Institucional del Club
-
-const { Identity } = require('../models'); // Importa el modelo Identity
+const { Identity } = require('../models');
 
 // Obtener la identidad institucional (normalmente solo habrá un registro)
 const getIdentity = async (req, res) => {
     try {
-        // Busca el primer registro activo de identidad.
-        // Asume que solo habrá un registro en la tabla para la identidad del club.
         const identity = await Identity.findOne({
-            where: { is_active: true },
+            where: { is_active: true }
         });
 
         if (!identity) {
-            // Si no hay un registro activo, devuelve 404
             return res.status(404).json({ message: 'Identidad institucional no encontrada o inactiva.' });
         }
         res.status(200).json(identity);
@@ -28,10 +23,7 @@ const getIdentity = async (req, res) => {
 };
 
 // Crear la identidad institucional
-// Esta función está diseñada para ser llamada una sola vez para crear el registro inicial.
-// Si ya existe un registro activo, se debería usar updateIdentity en su lugar.
 const createIdentity = async (req, res) => {
-    // Desestructura solo los campos que son NOT NULL en el modelo final, más los opcionales.
     const {
         missionText,
         missionImageUrl,
@@ -43,13 +35,11 @@ const createIdentity = async (req, res) => {
     } = req.body;
 
     try {
-        // Opcional: Verificar si ya existe un registro activo para evitar duplicados
         const existingIdentity = await Identity.findOne({ where: { is_active: true } });
         if (existingIdentity) {
             return res.status(409).json({ message: 'Ya existe un registro de identidad institucional activo. Por favor, actualícelo en su lugar.' });
         }
 
-        // Crea el nuevo registro con los campos permitidos por el modelo final
         const newIdentity = await Identity.create({
             missionText,
             missionImageUrl,
@@ -57,9 +47,9 @@ const createIdentity = async (req, res) => {
             visionImageUrl,
             valuesText,
             valuesImageUrl,
-            is_active: is_active !== undefined ? is_active : true, // Permite especificar is_active, por defecto true
+            is_active: is_active !== undefined ? is_active : true,
         });
-        res.status(201).json(newIdentity); // 201 Created
+        res.status(201).json(newIdentity);
     } catch (error) {
         console.error('Error al crear la identidad institucional:', error);
         res.status(500).json({
@@ -72,7 +62,7 @@ const createIdentity = async (req, res) => {
 
 // Actualizar la identidad institucional existente
 const updateIdentity = async (req, res) => {
-    // Desestructura SOLO los campos que se han definido como modificables en la última revisión del modelo.
+    const { id } = req.params; // <--- OBTENEMOS EL ID DE LOS PARÁMETROS DE LA RUTA
     const {
         missionText,
         missionImageUrl,
@@ -84,15 +74,7 @@ const updateIdentity = async (req, res) => {
     } = req.body;
 
     try {
-        // Busca el registro de identidad (el único activo)
-        const identity = await Identity.findOne();
-
-        if (!identity) {
-            return res.status(404).json({ message: 'Identidad institucional no encontrada para actualizar.' });
-        }
-
-        // Prepara el objeto con los campos a actualizar
-        const updateData = {
+        const [updatedRows] = await Identity.update({
             missionText,
             missionImageUrl,
             visionText,
@@ -100,13 +82,16 @@ const updateIdentity = async (req, res) => {
             valuesText,
             valuesImageUrl,
             is_active,
-        };
+        }, {
+            where: { id: id } // <--- USAMOS EL ID PARA LA ACTUALIZACIÓN
+        });
 
-        // Elimina los campos undefined para que Sequelize no intente actualizarlos a nulo si no se proporcionan
-        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+        if (updatedRows === 0) {
+            return res.status(404).json({ message: 'Identidad institucional no encontrada para actualizar.' });
+        }
 
-        await identity.update(updateData);
-        res.status(200).json(identity);
+        const updatedIdentity = await Identity.findByPk(id); // Obtenemos el registro actualizado
+        res.status(200).json(updatedIdentity);
     } catch (error) {
         console.error('Error al actualizar la identidad institucional:', error);
         res.status(500).json({
@@ -118,21 +103,18 @@ const updateIdentity = async (req, res) => {
 };
 
 // Borrado suave de la identidad institucional (establece is_active en false)
-// Útil si se quiere "ocultar" la sección de identidad sin borrarla.
 const softDeleteIdentity = async (req, res) => {
+    const { id } = req.params; // <--- OBTENEMOS EL ID DE LOS PARÁMETROS DE LA RUTA
     try {
-        // Busca el registro de identidad (el único activo)
-        const identity = await Identity.findOne();
+        const [updatedRows] = await Identity.update(
+            { is_active: false },
+            { where: { id: id, is_active: true } } // <--- USAMOS EL ID PARA LA DESACTIVACIÓN
+        );
 
-        if (!identity) {
-            return res.status(404).json({ message: 'Identidad institucional no encontrada.' });
-        }
-        if (!identity.is_active) {
-            return res.status(400).json({ message: 'La identidad institucional ya está inactiva.' });
+        if (updatedRows === 0) {
+            return res.status(404).json({ message: 'Identidad institucional no encontrada o ya está inactiva.' });
         }
 
-        identity.is_active = false;
-        await identity.save();
         res.status(200).json({ message: 'Identidad institucional desactivada exitosamente.' });
     } catch (error) {
         console.error('Error al desactivar la identidad institucional:', error);

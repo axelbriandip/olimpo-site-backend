@@ -2,16 +2,24 @@
 const express = require('express');
 const router = express.Router();
 const identityController = require('../controllers/identity.controller');
-const verifyToken = require('../middlewares/auth.middleware'); // Asegúrate de que esta ruta sea correcta
+const verifyToken = require('../middlewares/auth.middleware');
 
 // Rutas públicas (cualquiera puede ver la identidad institucional)
+// GET /api/identity
 router.get('/', identityController.getIdentity);
 
 // Rutas protegidas (requieren autenticación para crear/actualizar/borrar suavemente)
-// Nota: Dado que la identidad es un registro único, no se usa un ID en la URL para POST/PUT/DELETE
-// La función createIdentity debería ser llamada solo una vez.
+
+// Ruta para crear la identidad del club (solo si no existe una)
+// POST /api/identity (Protegida)
 router.post('/', verifyToken, identityController.createIdentity);
-router.put('/', verifyToken, identityController.updateIdentity); // PUT sin ID, asume que actualiza el único registro
-router.put('/delete', verifyToken, identityController.softDeleteIdentity); // PUT sin ID, asume que desactiva el único registro
+
+// Ruta para actualizar la identidad del club (Protegida)
+// PUT /api/identity/:id  <--- CAMBIO AQUÍ: Ahora espera un ID
+router.put('/:id', verifyToken, identityController.updateIdentity);
+
+// Ruta para "desactivar" la identidad (borrado suave)
+// PUT /api/identity/delete/:id <--- CAMBIO AQUÍ: Ahora espera un ID
+router.put('/delete/:id', verifyToken, identityController.softDeleteIdentity);
 
 module.exports = router;
