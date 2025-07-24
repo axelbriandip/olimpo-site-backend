@@ -11,7 +11,7 @@ const getAllMonthlyPlayers = async (req, res) => {
             include: [{
                 model: Player,
                 as: 'player', // Alias definido en src/models/index.js
-                attributes: ['id', 'firstName', 'lastName', 'position', 'number', 'photoUrl'], // Atributos del jugador a incluir
+                attributes: ['id', 'firstName', 'lastName', 'position', 'number', 'photoUrl', 'dateOfBirth'], // Atributos del jugador a incluir
                 required: true, // INNER JOIN: solo trae reconocimientos si el jugador existe
             }],
             order: [
@@ -38,7 +38,7 @@ const getMonthlyPlayerById = async (req, res) => {
             include: [{
                 model: Player,
                 as: 'player',
-                attributes: ['id', 'firstName', 'lastName', 'position', 'number', 'photoUrl'],
+                attributes: ['id', 'firstName', 'lastName', 'position', 'number', 'photoUrl', 'dateOfBirth'],
                 required: true,
             }],
         });
