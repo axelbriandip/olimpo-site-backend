@@ -18,6 +18,7 @@ const MonthlyPlayer = require('./monthlyPlayer.model')(sequelize, DataTypes); //
 const Testimonial = require('./testimonial.model')(sequelize, DataTypes);
 const User = require('./user.model')(sequelize, DataTypes);
 const Team = require('./team.model')(sequelize, DataTypes);
+const Sponsor = require('./sponsor.model')(sequelize, DataTypes); // <--- ¡NUEVA IMPORTACIÓN E INSTANCIACIÓN!
 
 
 // --- Definir Asociaciones ---
@@ -112,4 +113,5 @@ module.exports = {
     Testimonial,
     User,
     Team,
+    Sponsor, // <--- ¡NUEVA EXPORTACIÓN!
 };

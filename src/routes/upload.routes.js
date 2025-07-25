@@ -8,8 +8,9 @@ const uploadPlayer = require('../middlewares/upload.middleware'); // Para jugado
 const uploadNews = require('../middlewares/newsUpload.middleware'); // Para noticias
 const uploadHistory = require('../middlewares/historyUpload.middleware'); // Para historia (eventos/subsecciones)
 const uploadIdentity = require('../middlewares/identityUpload.middleware'); // Para identidad (logo/hero/mission/vision/values)
-const uploadMonthlyPlayer = require('../middlewares/monthlyPlayerUpload.middleware'); // <--- NUEVO: Para Jugadores del Mes
-const uploadTestimonial = require('../middlewares/testimonialUpload.middleware'); // <--- NUEVO: Para Testimonios
+const uploadMonthlyPlayer = require('../middlewares/monthlyPlayerUpload.middleware'); // Para Jugadores del Mes
+const uploadTestimonial = require('../middlewares/testimonialUpload.middleware'); // Para Testimonios
+const uploadSponsor = require('../middlewares/sponsorUpload.middleware'); // <--- NUEVO: Para Sponsors
 
 const verifyToken = require('../middlewares/auth.middleware'); // Para proteger estas rutas
 
@@ -81,7 +82,7 @@ router.post('/upload/identity/:type', verifyToken, uploadIdentity.single('imageF
     });
 });
 
-// NUEVA RUTA: Para subir imágenes de JUGADORES DEL MES
+// Ruta para subir imágenes de JUGADORES DEL MES
 // Endpoint: POST /api/upload/monthly-player-image
 // Campo esperado por Multer: 'imageFile'
 router.post('/upload/monthly-player-image', verifyToken, uploadMonthlyPlayer.single('imageFile'), (req, res) => {
@@ -97,7 +98,7 @@ router.post('/upload/monthly-player-image', verifyToken, uploadMonthlyPlayer.sin
     });
 });
 
-// NUEVA RUTA: Para subir FOTOS DE TESTIMONIOS
+// Ruta para subir FOTOS DE TESTIMONIOS
 // Endpoint: POST /api/upload/testimonial-photo
 // Campo esperado por Multer: 'imageFile'
 router.post('/upload/testimonial-photo', verifyToken, uploadTestimonial.single('imageFile'), (req, res) => {
@@ -107,6 +108,23 @@ router.post('/upload/testimonial-photo', verifyToken, uploadTestimonial.single('
     const imageUrl = `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/testimonials/${path.basename(req.file.path)}`;
     res.status(200).json({
         message: 'Foto de testimonio subida exitosamente.',
+        fileName: req.file.filename,
+        filePath: req.file.path,
+        imageUrl: imageUrl
+    });
+});
+
+// NUEVAS RUTAS: Para subir imágenes de SPONSORS (logo principal, blanco, negro)
+// Endpoint: POST /api/upload/sponsors/:type (donde :type es 'main', 'black', 'white')
+// Campo esperado por Multer: 'imageFile'
+router.post('/upload/sponsors/:type', verifyToken, uploadSponsor.single('imageFile'), (req, res) => { // Campo 'imageFile'
+    if (!req.file) {
+        return res.status(400).json({ message: 'No se ha subido ningún archivo para el sponsor.' });
+    }
+    const type = req.params.type;
+    const imageUrl = `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/sponsors/${type}/${path.basename(req.file.path)}`;
+    res.status(200).json({
+        message: `Logo de sponsor (${type}) subido exitosamente.`,
         fileName: req.file.filename,
         filePath: req.file.path,
         imageUrl: imageUrl
