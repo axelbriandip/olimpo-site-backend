@@ -1,17 +1,19 @@
 'use strict';
-const db = require('../models'); // Importamos la conexión a la base de datos
-const User = require('../models/user')(db.sequelize, db.Sequelize.DataTypes); // Importamos el modelo de Usuario directamente
+
+// La ruta correcta para acceder a los modelos desde la carpeta 'seeders'
+// es '../src/models'
+const db = require('../src/models');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
-     * El método 'up' ahora usa el modelo User importado directamente.
-     * Esto asegura que el hook de hasheo de la contraseña se ejecute sin importar
-     * la configuración del archivo models/index.js.
+     * Usamos el método `create()` del modelo 'User' que está en el objeto 'db'.
+     * Esto ejecutará los hooks de Sequelize definidos en tu modelo (como el hasheo
+     * de la contraseña) antes de insertarlo en la base de datos.
      */
-    await User.create({
+    await db.User.create({
       username: 'olimpoadmin',
-      password: '318614', // La contraseña se hasheará automáticamente
+      password: '318614', // La contraseña se hasheará automáticamente.
       email: 'clubolimpo.rg@gmail.com',
       is_active: true
     });
@@ -19,8 +21,7 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     /**
-     * El método 'down' se usa para deshacer los cambios, si es necesario.
-     * En este caso, elimina el usuario que creamos.
+     * El método 'down' para deshacer los cambios, si es necesario.
      */
     await queryInterface.bulkDelete('users', { username: 'olimpoadmin' }, {});
   }
