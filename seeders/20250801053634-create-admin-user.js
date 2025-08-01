@@ -1,15 +1,14 @@
 'use strict';
-const db = require('../models'); // Importa tu conexión de modelos
+const db = require('../models'); // Importamos la conexión a la base de datos
+const User = require('../models/user')(db.sequelize, db.Sequelize.DataTypes); // Importamos el modelo de Usuario directamente
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     /**
-     * El método 'up' ahora usa User.create() para asegurar que los hooks del modelo
-     * (como el hasheo de la contraseña) se ejecuten correctamente.
+     * El método 'up' ahora usa el modelo User importado directamente.
+     * Esto asegura que el hook de hasheo de la contraseña se ejecute sin importar
+     * la configuración del archivo models/index.js.
      */
-    const User = db.User; // Accede al modelo de usuario
-
-    // Crea el usuario usando el método del modelo
     await User.create({
       username: 'olimpoadmin',
       password: '318614', // La contraseña se hasheará automáticamente
