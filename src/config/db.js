@@ -2,30 +2,24 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Intenta usar DATABASE_URL si está disponible (común en entornos de producción como Render)
-// De lo contrario, usa las variables individuales para el desarrollo local
-const connectionString = process.env.DATABASE_URL;
+// Se usa directamente la DATABASE_URL para la conexión
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    logging: false, // Desactiva el log de SQL para producción
 
-const sequelize = new Sequelize(
-    // Si hay connectionString, Sequelize la parseará automáticamente.
-    // Si no, usa los parámetros individuales.
-    connectionString || process.env.DB_NAME, // DATABASE_URL ya incluye el nombre de la DB
-    connectionString ? null : process.env.DB_USER,
-    connectionString ? null : process.env.DB_PASSWORD,
-    {
-        host: connectionString ? null : process.env.DB_HOST,
-        dialect: 'postgres',
-        port: connectionString ? null : process.env.DB_PORT,
-        logging: false, // Puedes cambiar a console.log en desarrollo si quieres ver las queries SQL
-
-        // Configuración SSL para producción (requerida por Render y otros proveedores de DB en la nube)
-        dialectOptions: connectionString ? { // Solo aplica si estamos usando DATABASE_URL
-            ssl: {
-                require: true, // Forzar conexión SSL
-                rejectUnauthorized: false // Importante para Render, ya que usa certificados autofirmados
-            }
-        } : {}, // Objeto vacío si no hay connectionString (para desarrollo local sin SSL)
+    dialectOptions: {
+        ssl: {
+            require: true, // Forzar conexión SSL
+            rejectUnauthorized: false // ¡Crucial para Render! Permite certificados autofirmados
+        }
+    },
+    // Opcional: Pool de conexiones para mejor rendimiento en producción
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
     }
-);
+});
 
 module.exports = sequelize;
