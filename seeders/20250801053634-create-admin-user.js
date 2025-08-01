@@ -1,28 +1,22 @@
 'use strict';
-
-// La ruta correcta para acceder a los modelos desde la carpeta 'seeders'
-// es '../src/models'
-const db = require('../src/models');
+const bcrypt = require('bcryptjs'); // Importa bcryptjs
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    /**
-     * Usamos el método `create()` del modelo 'User' que está en el objeto 'db'.
-     * Esto ejecutará los hooks de Sequelize definidos en tu modelo (como el hasheo
-     * de la contraseña) antes de insertarlo en la base de datos.
-     */
-    await db.User.create({
+    // Hasheamos la contraseña directamente para evitar cualquier problema
+    const hashedPassword = await bcrypt.hash('318614', 10);
+
+    await queryInterface.bulkInsert('users', [{
       username: 'olimpoadmin',
-      password: '318614', // La contraseña se hasheará automáticamente.
+      password: hashedPassword, // Insertamos la contraseña ya hasheada
       email: 'clubolimpo.rg@gmail.com',
-      is_active: true
-    });
+      is_active: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }], {});
   },
 
   down: async (queryInterface, Sequelize) => {
-    /**
-     * El método 'down' para deshacer los cambios, si es necesario.
-     */
     await queryInterface.bulkDelete('users', { username: 'olimpoadmin' }, {});
   }
 };
