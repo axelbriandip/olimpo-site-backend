@@ -1,26 +1,28 @@
 'use strict';
-const bcrypt = require('bcryptjs'); // Necesitas importar bcryptjs para hashear
+const db = require('../models'); // Importa tu conexión de modelos
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // 1. Definir la contraseña de texto plano
-    const password = '318614';
+    /**
+     * El método 'up' ahora usa User.create() para asegurar que los hooks del modelo
+     * (como el hasheo de la contraseña) se ejecuten correctamente.
+     */
+    const User = db.User; // Accede al modelo de usuario
 
-    // 2. Hashear la contraseña de forma segura
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 3. Insertar el usuario con la contraseña ya hasheada
-    await queryInterface.bulkInsert('users', [{
+    // Crea el usuario usando el método del modelo
+    await User.create({
       username: 'olimpoadmin',
-      password: hashedPassword, // Insertamos la contraseña ya hasheada
+      password: '318614', // La contraseña se hasheará automáticamente
       email: 'clubolimpo.rg@gmail.com',
-      is_active: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }], {});
+      is_active: true
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
+    /**
+     * El método 'down' se usa para deshacer los cambios, si es necesario.
+     * En este caso, elimina el usuario que creamos.
+     */
     await queryInterface.bulkDelete('users', { username: 'olimpoadmin' }, {});
   }
 };
