@@ -1,46 +1,54 @@
-// src/middlewares/upload.middleware.js
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs-extra'); // Para asegurar que la carpeta exista
+// src/routes/upload.routes.js
+const express = require('express');
+const router = express.Router();
+const verifyToken = require('../middlewares/auth.middleware');
 
-// Define la carpeta de destino para las imágenes de jugadores
-const UPLOAD_DIR = path.join(__dirname, '../../public/uploads/players');
+// Importa el NUEVO y ÚNICO middleware de Firebase
+const { upload, uploadToFirebase } = require('../middlewares/firebaseUpload.middleware');
 
-// Asegúrate de que la carpeta de destino exista
-fs.ensureDirSync(UPLOAD_DIR); // Crea la carpeta si no existe
+// --- Rutas para Subida de Imágenes ---
 
-// Configuración de almacenamiento para Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, UPLOAD_DIR); // Define la carpeta donde se guardarán los archivos
-    },
-    filename: (req, file, cb) => {
-        // Genera un nombre de archivo único para evitar colisiones
-        // Nombre: timestamp-nombre_original_sin_espacios.ext
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileExtension = path.extname(file.originalname);
-        const fileName = file.originalname.split('.')[0].replace(/\s/g, '_'); // Elimina espacios del nombre original
-        cb(null, `${fileName}-${uniqueSuffix}${fileExtension}`);
-    },
-});
-
-// Filtro para aceptar solo ciertos tipos de archivos (imágenes)
-const fileFilter = (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true); // Acepta el archivo
-    } else {
-        cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes JPEG, PNG, GIF o WebP.'), false); // Rechaza el archivo
+// Middleware que aplica Multer y la subida a Firebase
+// Se encadena Multer para procesar el archivo y luego el middleware de Firebase para subirlo
+const handleFileUpload = (req, res, next) => {
+    if (!req.fileUrl) {
+        return res.status(400).json({ message: 'No se ha subido ningún archivo.' });
     }
+    // Si la subida fue exitosa, la URL está en req.fileUrl
+    const imageUrl = req.fileUrl;
+    res.status(200).json({
+        message: 'Imagen subida exitosamente.',
+        imageUrl: imageUrl,
+    });
 };
 
-// Configuración final de Multer
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024, // Limite de tamaño de archivo (5MB)
-    },
-});
+// Ruta para subir fotos de JUGADORES
+// Endpoint: POST /api/upload/players
+// Campo esperado: 'imageFile'
+router.post('/upload/players', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
 
-module.exports = upload;
+// Ruta para subir imágenes de NOTICIAS
+// Endpoint: POST /api/upload/news
+router.post('/upload/news', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+// Ruta para subir imágenes de HISTORIA
+// Endpoint: POST /api/upload/history/:type
+router.post('/upload/history/:type', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+// RUTAS PARA SUBIR IMÁGENES DE IDENTIDAD
+// Endpoint: POST /api/upload/identity/:type
+router.post('/upload/identity/:type', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+// Ruta para subir imágenes de JUGADORES DEL MES
+// Endpoint: POST /api/upload/monthly-player-image
+router.post('/upload/monthly-player-image', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+// Ruta para subir FOTOS DE TESTIMONIOS
+// Endpoint: POST /api/upload/testimonial-photo
+router.post('/upload/testimonial-photo', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+// RUTAS para subir imágenes de SPONSORS
+// Endpoint: POST /api/upload/sponsors/:type
+router.post('/upload/sponsors/:type', verifyToken, upload.single('imageFile'), uploadToFirebase, handleFileUpload);
+
+module.exports = router;
